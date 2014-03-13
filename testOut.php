@@ -1,5 +1,5 @@
 <?php
-class Foo
+class Foo3
 {
 	private $pyTest = null;
 	public function __construct($val = 123)
@@ -17,22 +17,16 @@ class Foo
 		$this->pyTest = $val;
 		return $this;
 	}
-
-	public function __get($val)
-	{
-		if ($val == 'pyTest')
-			return $this->pyTest;
-	}
-
-	public function __set($n, $v)
-	{
-		$this->{$n} = $v;
-	}
 }
-$i = new Foo;
-$temp = $i->getPyTest();
-
-if ($i->getPyTest() < 300)
+$start = microtime(true);
+for ($i=0;$i<100;++$i)
 {
-	$i->setPyTest(456);
+	$foo = new Foo3($i);
+	$temp = $foo->getPyTest();
+	if ($foo->getPyTest()*$i < 300)
+	{
+		$foo->setPyTest(456);
+	}
 }
+printf('Loop took %.6fms', microtime(true) - $start);
+echo PHP_EOL;
