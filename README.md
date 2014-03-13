@@ -5,15 +5,15 @@ Simple way to scan php scripts for use of magic getters/setters. The Scanner.py 
 Use case:
 
 ```php
-    $instance->protectedProperty = 42;
-    echo $instance->protectedProperty;
+$instance->protectedProperty = 42;
+echo $instance->protectedProperty;
 ```
 
 will be replaced with:
 
 ```php
-    $instance->setProtectedProperty(42);
-    echo $instance->getProtectedProperty();
+$instance->setProtectedProperty(42);
+echo $instance->getProtectedProperty();
 ```
 
 Indentation and line-feeds are preserved
@@ -21,6 +21,42 @@ Indentation and line-feeds are preserved
 ## Requirements
  * python3.3 - I've decided to go for the latest stable version of python, not for any particular reason, just because.
  * So far, nothing else. AFAIK, all imports are standard
+
+## Basic usage
+
+Scanner can be used as a standalone CLI tool, or can be imported in another script.
+
+#### CLI usage
+This is pretty self-explanatory, but still:
+
+```
+$ python3.3 Scanner.py -h
+```
+
+gives you a basic overview of what you can specify using the script as a command-line tool. Sufficive to say that:
+
+```
+$ python3.3 Scanner.py -l1 -d -f > output.tmp
+```
+will give you a list of what statements or expressions in what files will be changed if you run the same command again, without the `-d` or `--dry` flag.
+
+
+#### Import
+
+As shown in the `example.py` file in this repo simply adding:
+
+```python
+from Scanner import Scanner
+## or
+from Scanner import Scanner, usage
+```
+Is all you need to do. Create an instance of the `Scanner` class, and pass a dictionary as an argument to configure it, as shown in `example.py`. There are more options available, of course:
+
+```python
+myScanner = Scanner({'extension': '.log', 'pattern': r'^err', 'depth': 1, 'path': '/var/log', 'scan':True, 'full': True})
+myScanner.scanDir()
+```
+For example, scans all .log files in the /var/log dir for lines beginning with `err`, the output will be a list those lines that were found.
 
 ## Test files
 
@@ -35,21 +71,6 @@ Basic example difference is 0.00156
 ```
 
 These were the results of running the timeDiff.php script. Note that apart from the changes I mentioned (not re-declaring the `Foo` class and _adding_ two methods), the code is unchanged. In reality, we got rid of the magic methods, too. the code, then looks more like the one you see in testOut.php.
-
-## Basic usage:
-
-This is pretty self-explanatory, but still:
-
-```
-$ python3.3 Scanner.py -h
-```
-
-Should help you out here. Sufficive to say that:
-
-```
-$ python3.3 Scanner.py -l1 -d -f > output.tmp
-```
-will give you a list of what statements or expressions in what files will be changed if you run the same command again, without the `-d` or `--dry` flag.
 
 ## History
 

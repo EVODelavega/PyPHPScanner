@@ -22,6 +22,8 @@ import getopt
   #          Default prompt for each file          #
   #  --d(ry) Dry-run the script, it's recommended  #
   #        To redirect output to a tmp file        #
+  #  --s(can) performs just a scan, does not try   #
+  #        To replace/refactor found matches       #
   #       --h simply displays a help message       #
   #                                                #
   #            NOTE: Requires python 3.3           #
@@ -32,6 +34,7 @@ class Scanner:
     pattern = 0
     depth = 0
     path = './'
+    scan = False
     dry = False
     full = False
     excludes = []
@@ -76,7 +79,7 @@ class Scanner:
     # pass sys.argv[1:] here, to configure the instance based on CLI arguments
     def parseCliArgs(self, argv):
         try:
-            opts, args = getopt.getopt(argv, "hfdl:p:", ["help", "full", "dry", "level=", "path="])
+            opts, args = getopt.getopt(argv, "hfsdl:p:", ["help", "full", "scan", "dry", "level=", "path="])
         except getopt.GetoptError as err:
             print(str(err))
             usage()
@@ -90,6 +93,8 @@ class Scanner:
                 self.depth = int(val)
             elif o in ('-f', '--full'):
                 self.full = True
+            elif o in ('-s', '--scan'):
+                self.scan = True
             elif o in ('-d', '--dry'):
                 self.dry = True
             elif o in ("-p", "--path"):
@@ -112,6 +117,8 @@ class Scanner:
             Dir = self.path
         else:
             print('Now scanning: ', Dir)
+        if Dir[-1] != '/':
+            Dir += '/'
         todo = []
         files = os.listdir(Dir)
         offset = len(self.extension) * -1
@@ -152,23 +159,28 @@ class Scanner:
                 for line in fp:
                     lnum += 1
                     for match in p.finditer(line):
-                        print(fName, '@',str(lnum),': Found ', line.strip(), '\n:suggested replacement: ', self.p2GS(line, match).strip())
+                        print(fName, '@',str(lnum),': Found ', line.strip())
+                        if self.scan == False:
+                            print('suggested replacement: ', self.p2GS(line, match).strip())
                 fp.close()
                 return self
             lines = fp.readlines()
             for lnum, line in enumerate(lines):
                 for match in p.finditer(line):
-                    repl = input(r'Replace $' + match.group(0) + '@ line ' + str(lnum+1) +'? [y/m/N]')
-                    repl = repl.lower()
-                    if repl == 'y':
-                        lines[lnum] = self.p2GS(line, match)
-                        reqRewrite = True
-                    elif repl == 'm':
-                        lines[lnum] = input(r'Please input full replacement line for '+lines[lnum])
-                        lines[lnum] += '\n'
-                        reqRewrite = True
+                    if self.scan == True:
+                        print(fName, '@',str(lnum),': Found ', line.strip())
                     else:
-                        print('Not replaced with', self.p2GS(line, match).strip())
+                        repl = input(r'Replace $' + match.group(0) + '@ line ' + str(lnum+1) +'? [y/m/N]')
+                        repl = repl.lower()
+                        if repl == 'y':
+                            lines[lnum] = self.p2GS(line, match)
+                            reqRewrite = True
+                        elif repl == 'm':
+                            lines[lnum] = input(r'Please input full replacement line for '+lines[lnum])
+                            lines[lnum] += '\n'
+                            reqRewrite = True
+                        else:
+                            print('Not replaced with', self.p2GS(line, match).strip())
             if reqRewrite == True:
                 fp.close()
                 fp = open(fName, 'w')
@@ -209,6 +221,7 @@ def usage():
     print('-p(ath=)<path>  : absolute (or relative to this scrip) path in which to begin search (default pwd)')
     print('-f(ull)         : Perform a full scan, do not prompt to search files individually')
     print('-d(ry)          : dry-run, redirecting the output to a temp file is strongly recommended')
+    print('-s(can)         : Scan only, just match pattern, without suggesting/trying to refactor/replace')
 
 ## Process CLI arguments, call functions accordingly
 def main (argv):
