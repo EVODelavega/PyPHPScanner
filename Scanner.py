@@ -37,10 +37,12 @@ class Scanner:
     accesOfOperator = '->' ## todo?
     
     def __init__ (self, params = {}):
+        # optionally pass a dictionary, to set up the class just-so
         for p, val in params.items():
-            if hasattr(self, p):
+            if hasattr(self, p):  ## only set existing properties
                 setattr(self, p, val)
     
+    # use setter method, to ensure a string or regex object is assigned to pattern
     def setPattern(self, string):
         if isinstance(re.compile('a'), string):
             self.pattern = string
@@ -48,13 +50,15 @@ class Scanner:
             self.pattern = re.compile(string)
         return self
     
+    # only use getPattern internally, though slower, it ensures us we have a regex object
     def getPattern(self):
-        if self.pattern == 0:
+        if self.pattern == 0: ## lazy-load default regex
             self.pattern = re.compile(r'(?<=\$(?!this))(\w+)(?:->)(_?\w+\b)(?!\()')
         elif type(re.compile('a')) != type(self.pattern):
             self.pattern = re.compile(self.pattern)
         return self.pattern
 
+    # pass sys.argv[1:] here, to configure the instance based on CLI arguments
     def parseCliArgs(self, argv):
         try:
             opts, args = getopt.getopt(argv, "hfdl:p:", ["help", "full", "dry", "level=", "path="])
@@ -86,6 +90,7 @@ class Scanner:
             self.path = './'
         return self
     
+    # recursive method, uses self.path if no Dir is specified
     def scanDir (self, Dir = 0):
         if Dir == 0:
             print('Start scanning from: ', self.path)
@@ -97,6 +102,7 @@ class Scanner:
         offset = len(self.extension) * -1
         for i, val in enumerate(files):
             if val[offset:] == self.extension:
+            ## do not prompt if full is true (forces everything to true, except for replacing)
                 if self.full == True:
                     self.processFile(Dir + val)
                 else:
@@ -111,6 +117,7 @@ class Scanner:
             self.depth -= 1
         for i in range(len(todo)):
             if self.full == True:
+            ## force recursive scanning withing self.depth range
                 self.scanDir(todo[i])
             else:
                 k = input('Scan "' + todo[i] + '"?" [Y/n]')
@@ -120,9 +127,11 @@ class Scanner:
 
     def processFile (self, fName):
         p = self.getPattern()
-        reqRewrite = False
+        reqRewrite = False ## avoid re-writing a file that hasn't changed
+    ## in case some corrupted or cache files are being read try-catch
         try:
             fp = open(fName)
+        ## dry-run shouldn't prompt to re-write lines, it just prints them
             if self.dry == True:
                 lnum = 0
                 for line in fp:
@@ -131,31 +140,31 @@ class Scanner:
                         print(fName, '@',str(lnum),': Found ', line.strip(), '\n:suggested replacement: ', self.p2GS(line, match).strip())
                 fp.close()
                 return self
-            else:
-                lines = fp.readlines()
-                for lnum, line in enumerate(lines):
-                    for match in p.finditer(line):
-                        repl = input(r'Replace $' + match.group(0) + '@ line ' + str(lnum+1) +'? [y/m/N]')
-                        repl = repl.lower()
-                        if repl == 'y':
-                            lines[lnum] = self.p2GS(line, match)
-                            reqRewrite = True
-                        elif repl == 'm':
-                            lines[lnum] = input(r'Please input full replacement line for '+lines[lnum])
-                            lines[lnum] += '\n'
-                            reqRewrite = True
-                        else:
-                            print('Not replaced with', self.p2GS(line, match).strip())
+            lines = fp.readlines()
+            for lnum, line in enumerate(lines):
+                for match in p.finditer(line):
+                    repl = input(r'Replace $' + match.group(0) + '@ line ' + str(lnum+1) +'? [y/m/N]')
+                    repl = repl.lower()
+                    if repl == 'y':
+                        lines[lnum] = self.p2GS(line, match)
+                        reqRewrite = True
+                    elif repl == 'm':
+                        lines[lnum] = input(r'Please input full replacement line for '+lines[lnum])
+                        lines[lnum] += '\n'
+                        reqRewrite = True
+                    else:
+                        print('Not replaced with', self.p2GS(line, match).strip())
             if reqRewrite == True:
                 fp.close()
                 fp = open(fName, 'w')
                 for line in lines:
                     fp.write(line)
         except UnicodeDecodeError as err:
-            print(fName, 'is not a readable file', str(err))
+            print(fName, 'is not a readable file', str(err)) ## this is a non-fatal error, just print msg
         fp.close()
         return self
-        
+
+    # construct replacement string from line + match groups, needs work
     def p2GS(self, line, matches):
         match = matches.group(0)
         offset = line.find(matches.group(0))
@@ -164,10 +173,8 @@ class Scanner:
         ## get or set?
         equal = line[offset:].find('=')
         semicol = line[offset:].find(';')
-        if semicol < 0 and equal < 0:
-            return line
-        # setter?
-        if semicol < 0 or (equal > 0 and semicol > equal):
+        # setter
+        if (semicol < 0 and equal >= 0) or (equal > 0 and semicol > equal):
             chunks.append('->set' + matches.group(2)[0].upper() + matches.group(2)[1:] + '(')
             equal += offset+1
             semicol += offset
