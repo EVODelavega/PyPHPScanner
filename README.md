@@ -1,8 +1,9 @@
 PyPHPScanner
 ============
 
-Simple way to scan php scripts for use of magic getters/setters. The Scanner.py file can also replace these, statements with an accuracy of approx. 85~90%, so don't trust it blindly...
-Use case:
+Simple way to scan text files (logs, other scripts,...). Was originally written to scan PHP scripts for use of magic getters/setters, hence the name.
+The Scanner.py file can also replace these, statements with an accuracy of approx. 85~90%. It struggles with nested expressions and simply cannot deal with multi-line statements (Yet). Just don't trust this script blindly.
+Example of its original purpouse, and to show what this Scanner can do:
 
 ```php
 $instance->protectedProperty = 42;
@@ -21,6 +22,7 @@ Indentation and line-feeds are preserved
 ## Requirements
  * python3.3 - I've decided to go for the latest stable version of python, not for any particular reason, just because.
  * So far, nothing else. AFAIK, all imports are standard
+ * Only tested on Linux, I cannot vouch for this working on any other system
 
 ## Basic usage
 

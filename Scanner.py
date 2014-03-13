@@ -57,7 +57,6 @@ class Scanner:
         for ex in exList:
             if ex[offset:] != self.extension:
                 ex += self.extension
-            print('Added exclude: ', ex)
             self.excludes.append(ex)
 
     # use setter method, to ensure a string or regex object is assigned to pattern
