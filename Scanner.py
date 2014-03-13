@@ -34,14 +34,29 @@ class Scanner:
     path = './'
     dry = False
     full = False
+    excludes = []
     accesOfOperator = '->' ## todo?
     
     def __init__ (self, params = {}):
         # optionally pass a dictionary, to set up the class just-so
+        setEx = False
         for p, val in params.items():
-            if hasattr(self, p):  ## only set existing properties
+            if hasattr(self, p) and p != 'excludes':  ## only set existing properties, treat excludes separately
                 setattr(self, p, val)
+            elif p == 'excludes':
+                setEx = True
+        if setEx == True: ## onle set after processing the dict, make sure the extension is set
+            self.setExcludes(params['excludes'])
     
+    #special case for excludes property: check extension, add if required
+    def setExcludes(self, exList):
+        offset = len(self.extension) * -1
+        for ex in exList:
+            if ex[offset:] != self.extension:
+                ex += self.extension
+            print('Added exclude: ', ex)
+            self.excludes.append(ex)
+
     # use setter method, to ensure a string or regex object is assigned to pattern
     def setPattern(self, string):
         if isinstance(re.compile('a'), string):
@@ -101,8 +116,8 @@ class Scanner:
         files = os.listdir(Dir)
         offset = len(self.extension) * -1
         for i, val in enumerate(files):
-            if val[offset:] == self.extension:
-            ## do not prompt if full is true (forces everything to true, except for replacing)
+            if val[offset:] == self.extension and val not in self.excludes:
+                ## do not prompt if full is true (forces everything to true, except for replacing)
                 if self.full == True:
                     self.processFile(Dir + val)
                 else:
