@@ -76,6 +76,9 @@ These were the results of running the timeDiff.php script. Note that apart from 
 
 ## History
 
+I've chosen the GPL license simply because I realize that this code could benefit from some review. I hadn't written any Python when I started this project. It's more of a by-product of my learning the language. I haven't spent more than a couple of hours on it. If anything, that's a testement to how easy Python is to learn. This also explains why there are still a number of things that need work.
+If I find the time, I'll work on further abstracting the Scanner class, and house the actual PHP scanner to a child class. I'll be adding on other features as separate entities, too, to create a truly generic Scanner module. At least, that's the idea
+
 My main motivation for writing the initial version of this script (Not sure if it still works, even), was that I had to do some rather serious refactoring.
 The "core" of our PHP framework had been _"refactored"_ (more like a complete overhaul), and I had to fix several thousand lines of code.
 

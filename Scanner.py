@@ -67,8 +67,8 @@ class Scanner:
             self.pattern = re.compile(string)
         return self
     
-    # only use getPattern internally, though slower, it ensures us we have a regex object
-    def getPattern(self):
+    # only use _getPattern internally, though slower, it ensures us we have a regex object
+    def _getPattern(self):
         if self.pattern == 0: ## lazy-load default regex
             self.pattern = re.compile(r'(?<=\$(?!this))(\w+)(?:->)(_?\w+\b)(?!\()')
         elif type(re.compile('a')) != type(self.pattern):
@@ -147,7 +147,7 @@ class Scanner:
         return self
 
     def processFile (self, fName):
-        p = self.getPattern()
+        p = self._getPattern()
         reqRewrite = False ## avoid re-writing a file that hasn't changed
     ## in case some corrupted or cache files are being read try-catch
         try:
