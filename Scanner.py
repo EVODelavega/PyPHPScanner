@@ -29,6 +29,7 @@ import getopt
   #            NOTE: Requires python 3.3           #
   ##################################################
 
+
 class Scanner:
     extension = '.php'
     pattern = 0
@@ -38,17 +39,19 @@ class Scanner:
     dry = False
     full = False
     excludes = []
-    accesOfOperator = '->' ## todo?
+    accessOfOperator = '->'  # todo?
     
-    def __init__ (self, params = {}):
+    def __init__(self, params=None):
         # optionally pass a dictionary, to set up the class just-so
+        if not params:
+            params = {}
         setEx = False
         for p, val in params.items():
-            if hasattr(self, p) and p != 'excludes':  ## only set existing properties, treat excludes separately
+            if hasattr(self, p) and p != 'excludes':  # only set existing properties, treat excludes separately
                 setattr(self, p, val)
             elif p == 'excludes':
                 setEx = True
-        if setEx == True: ## onle set after processing the dict, make sure the extension is set
+        if setEx:  # only set after processing the dict, make sure the extension is set
             self.setExcludes(params['excludes'])
     
     #special case for excludes property: check extension, add if required
@@ -69,7 +72,7 @@ class Scanner:
     
     # only use _getPattern internally, though slower, it ensures us we have a regex object
     def _getPattern(self):
-        if self.pattern == 0: ## lazy-load default regex
+        if self.pattern == 0:  # lazy-load default regex
             self.pattern = re.compile(r'(?<=\$(?!this))(\w+)(?:->)(_?\w+\b)(?!\()')
         elif type(re.compile('a')) != type(self.pattern):
             self.pattern = re.compile(self.pattern)
@@ -110,7 +113,7 @@ class Scanner:
         return self
     
     # recursive method, uses self.path if no Dir is specified
-    def scanDir (self, Dir = 0):
+    def scanDir(self, Dir=0):
         if Dir == 0:
             print('Start scanning from: ', self.path)
             Dir = self.path
@@ -124,52 +127,52 @@ class Scanner:
         for i, val in enumerate(files):
             if val[offset:] == self.extension and val not in self.excludes:
                 ## do not prompt if full is true (forces everything to true, except for replacing)
-                if self.full == True:
+                if self.full:
                     self.processFile(Dir + val)
                 else:
                     k = input(r'Process file "' + Dir + val + '"? [y/N]')
                     if k == 'y':
                         self.processFile(Dir + val) 
-            elif os.path.isdir(Dir + val) == True:
+            elif os.path.isdir(Dir + val):
                 todo.append(Dir + val + '/')
         if self.depth == 1:
             return
         elif self.depth != 0:
             self.depth -= 1
         for i in range(len(todo)):
-            if self.full == True:
+            if self.full:
             ## force recursive scanning withing self.depth range
                 self.scanDir(todo[i])
             else:
                 k = input('Scan "' + todo[i] + '"?" [Y/n]')
                 if k != 'n':
-                   self.scanDir(todo[i])
+                    self.scanDir(todo[i])
         return self
 
-    def processFile (self, fName):
+    def processFile(self, fName):
         p = self._getPattern()
-        reqRewrite = False ## avoid re-writing a file that hasn't changed
+        fp = reqRewrite = False  # avoid re-writing a file that hasn't changed
     ## in case some corrupted or cache files are being read try-catch
         try:
             fp = open(fName)
         ## dry-run shouldn't prompt to re-write lines, it just prints them
-            if self.dry == True:
+            if self.dry:
                 lnum = 0
                 for line in fp:
                     lnum += 1
                     for match in p.finditer(line):
-                        print(fName, '@',str(lnum),': Found ', line.strip())
-                        if self.scan == False:
+                        print(fName, '@', str(lnum), ': Found ', line.strip())
+                        if not self.scan:
                             print('suggested replacement: ', self.p2GS(line, match).strip())
                 fp.close()
                 return self
             lines = fp.readlines()
             for lnum, line in enumerate(lines):
                 for match in p.finditer(line):
-                    if self.scan == True:
-                        print(fName, '@',str(lnum),': Found ', line.strip())
+                    if self.scan:
+                        print(fName, '@', str(lnum), ': Found ', line.strip())
                     else:
-                        repl = input(r'Replace $' + match.group(0) + '@ line ' + str(lnum+1) +'? [y/m/N]')
+                        repl = input(r'Replace $' + match.group(0) + '@ line ' + str(lnum+1) + '? [y/m/N]')
                         repl = repl.lower()
                         if repl == 'y':
                             lines[lnum] = self.p2GS(line, match)
@@ -180,27 +183,27 @@ class Scanner:
                             reqRewrite = True
                         else:
                             print('Not replaced with', self.p2GS(line, match).strip())
-            if reqRewrite == True:
+            if reqRewrite:
                 fp.close()
                 fp = open(fName, 'w')
                 for line in lines:
                     fp.write(line)
         except UnicodeDecodeError as err:
-            print(fName, 'is not a readable file', str(err)) ## this is a non-fatal error, just print msg
-        fp.close()
+            print(fName, 'is not a readable file', str(err))  # this is a non-fatal error, just print msg
+        if fp:
+            fp.close()
         return self
 
     # construct replacement string from line + match groups, needs work
     def p2GS(self, line, matches):
-        match = matches.group(0)
         offset = line.find(matches.group(0))
-        chunks = [line[:offset],matches.group(1)]
+        chunks = [line[:offset], matches.group(1)]
         offset += len(matches.group(0))
         ## get or set?
         equal = line[offset:].find('=')
         semicol = line[offset:].find(';')
         # setter
-        if (semicol < 0 and equal >= 0) or (equal > 0 and semicol > equal):
+        if (semicol < 0 <= equal) or (0 < equal < semicol):
             chunks.append('->set' + matches.group(2)[0].upper() + matches.group(2)[1:] + '(')
             equal += offset+1
             semicol += offset
@@ -213,6 +216,7 @@ class Scanner:
         chunks.append(line[offset:])
         return ''.join(chunks)
 
+
 ## help func
 def usage():
     print('-h(elp)         : display this message')
@@ -222,11 +226,13 @@ def usage():
     print('-d(ry)          : dry-run, redirecting the output to a temp file is strongly recommended')
     print('-s(can)         : Scan only, just match pattern, without suggesting/trying to refactor/replace')
 
+
 ## Process CLI arguments, call functions accordingly
-def main (argv):
+def main(argv):
     scanner = Scanner()
     scanner.parseCliArgs(argv)
     scanner.scanDir()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
