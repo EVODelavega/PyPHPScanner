@@ -199,11 +199,17 @@ class Scanner:
         offset = line.find(matches.group(0))
         chunks = [line[:offset], matches.group(1)]
         offset += len(matches.group(0))
+        ## array keys mess up this bit
+        aKey = line[offset:].find(']')
         ## get or set?
         equal = line[offset:].find('=')
         semicol = line[offset:].find(';')
+        if aKey > equal:
+            aKey = -1
+        elif equal > 0 and line[offset+equal+1] == '=':
+           equal = -1
         # setter
-        if (semicol < 0 <= equal) or (0 < equal < semicol):
+        if aKey < 0 and ((semicol < 0 <= equal) or (0 < equal < semicol)):
             chunks.append('->set' + matches.group(2)[0].upper() + matches.group(2)[1:] + '(')
             equal += offset+1
             semicol += offset
