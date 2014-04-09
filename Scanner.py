@@ -38,6 +38,7 @@ class Scanner:
     scan = False
     dry = False
     full = False
+    operators = ['=', '<', '>', '!']
     excludes = []
     accessOfOperator = '->'  # todo?
     
@@ -206,7 +207,7 @@ class Scanner:
         semicol = line[offset:].find(';')
         if aKey > equal:
             aKey = -1
-        elif equal > 0 and line[offset+equal+1] == '=':
+        elif equal > 0 and (line[offset+equal+1] in self.operators or line[offset+equal-1] in self.operators):
            equal = -1
         # setter
         if aKey < 0 and ((semicol < 0 <= equal) or (0 < equal < semicol)):
