@@ -164,7 +164,10 @@ class Scanner:
                     for match in p.finditer(line):
                         print(fName, '@', str(lnum), ': Found ', line.strip())
                         if not self.scan:
-                            print('suggested replacement: ', self.p2GS(line, match).strip())
+                            replace = self.p2GS(line, match)
+                            for match in p.finditer(replace):
+                                replace = self.p2GS(replace, match)
+                            print('suggested replacement: ', replace.strip())
                 fp.close()
                 return self
             lines = fp.readlines()
@@ -176,14 +179,20 @@ class Scanner:
                         repl = input(r'Replace $' + match.group(0) + '@ line ' + str(lnum+1) + '? [y/m/N]')
                         repl = repl.lower()
                         if repl == 'y':
-                            lines[lnum] = self.p2GS(line, match)
+                            replace = self.p2GS(line, match)
+                            for match in p.finditer(replace):
+                                replace = self.p2GS(replace, match)
+                            lines[lnum] = replace
                             reqRewrite = True
                         elif repl == 'm':
                             lines[lnum] = input(r'Please input full replacement line for '+lines[lnum])
                             lines[lnum] += '\n'
                             reqRewrite = True
                         else:
-                            print('Not replaced with', self.p2GS(line, match).strip())
+                            replace = self.p2GS(line, match)
+                            for match in p.finditer(replace):
+                                replace = self.p2GS(replace, match)
+                            print('Not replaced with', replace.strip())
             if reqRewrite:
                 fp.close()
                 fp = open(fName, 'w')

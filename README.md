@@ -2,7 +2,7 @@ PyPHPScanner
 ============
 
 Simple way to scan text files (logs, other scripts,...). Was originally written to scan PHP scripts for use of magic getters/setters, hence the name.
-The Scanner.py file can also replace these, statements with an accuracy of approx. 90~95%. It struggles with nested expressions and simply cannot deal with multi-line statements (Yet). Just don't trust this script blindly.
+The Scanner.py file can also replace these, statements with an accuracy of approx. 90~95%. It simply cannot deal with multi-line statements (Yet). Just don't trust this script blindly.
 Example of its original purpouse, and to show what this Scanner can do:
 
 ```php
@@ -26,6 +26,16 @@ $lifeTheUniverseAndEverything[$instance->answer] = 'Not a question';
 //is replaced with:
 $lifeTheUniverseAndEverything[$instance->getAnswer()] = 'Not a question';
 ```
+
+Nested expressions (ie assignments) are now supported:
+
+```php
+$foo->property = $bar->value*3;
+//is replaced with:
+$foo->setProperty($bar->getValue()*3);
+```
+
+The next step will be: adding support for fluent interfaces (chainable calls) + context awareness and multi-line statements
 
 ## Requirements
  * python3.3 - I've decided to go for the latest stable version of python, not for any particular reason, just because.
