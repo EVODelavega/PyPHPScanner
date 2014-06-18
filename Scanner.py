@@ -75,8 +75,8 @@ class Scanner:
     def _getPattern(self):
         if self.pattern == 0:  # lazy-load default regex
             self.pattern = re.compile(r'(?<=\$(?!this))(\w+)(?:->)(_?\w+\b)(?!\()')
-        elif type(re.compile('a')) != type(self.pattern):
-            self.pattern = re.compile(self.pattern)
+        elif isinstance(self.pattern, re._pattern_type) == False:
+            self.pattern = re.compile(self.pattern)  # Assume string, compile and continue
         return self.pattern
 
     # pass sys.argv[1:] here, to configure the instance based on CLI arguments

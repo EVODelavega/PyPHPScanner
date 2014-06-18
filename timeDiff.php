@@ -1,7 +1,7 @@
 <?php
 $execTimes = array(
-	'magic'	=> 0,
-	'custom'=> 0
+    'magic' => 0,
+    'custom'=> 0
 );
 $start = microtime(true);
 include 'test.php';
@@ -12,7 +12,7 @@ include 'after.php';
 $execTimes['custom'] = microtime(true) - $start;
 
 printf(
-	'Basic example difference is %.5f',
-	$execTimes['magic'] - $execTimes['custom']
+    'Basic example difference is %.5f',
+    $execTimes['magic'] - $execTimes['custom']
 );
 echo PHP_EOL;
